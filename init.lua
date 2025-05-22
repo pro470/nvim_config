@@ -32,6 +32,8 @@ dofile(vim.g.base46_cache .. "statusline")
 require "options"
 require "nvchad.autocmds"
 
+vim.opt.relativenumber = true
+
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup('lsp_attach_disable_ruff_hover', { clear = true }),
   callback = function(args)
@@ -108,7 +110,54 @@ end
 vim.api.nvim_create_autocmd({"BufEnter", "BufLeave"}, {
     callback = manage_crates_keymaps,
 })
+local numbertoggle = vim.api.nvim_create_augroup("numbertoggle", {})
+vim.api.nvim_create_autocmd(
+    { "BufEnter", "FocusGained", "InsertLeave", "WinEnter", "CmdlineLeave" },
+    {
+        group = numbertoggle,
+        callback = function()
+            if vim.opt.number:get() and vim.api.nvim_get_mode() ~= "i" then
+                vim.opt.relativenumber = true
+            end
+        end,
+    }
+)
+
+vim.api.nvim_create_autocmd(
+    { "BufLeave", "FocusLost", "InsertEnter", "WinLeave", "CmdlineEnter" },
+    {
+        group = numbertoggle,
+        callback = function()
+            if vim.opt.number:get() then
+                vim.opt.relativenumber = false
+                vim.cmd("redraw")
+            end
+        end,
+    }
+)
+
+
+local group = vim.api.nvim_create_augroup('rust_autoformat', {})
+
+-- Format on save using LSP (before the file is saved)
+vim.api.nvim_create_autocmd('User', {
+    pattern = 'AutoSaveWritePre',
+    group = group,
+    callback = function(opts)
+        if not opts.data or not opts.data.saved_buffer then return end
+        
+        local bufnr = opts.data.saved_buffer
+        if vim.bo[bufnr].filetype ~= 'rust' then return end
+
+        -- Format using LSP synchronously, so formatting completes before the save
+        vim.lsp.buf.format({
+            bufnr = bufnr,
+            async = false,  -- Ensure formatting completes before save
+        })
+    end,
+})
 
 vim.schedule(function()
   require "mappings"
 end)
+

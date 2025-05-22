@@ -4,7 +4,7 @@ require("nvchad.configs.lspconfig").defaults()
 local lspconfig = require "lspconfig"
 
 -- EXAMPLE
-local servers = { "html", "cssls", "java_language_server", "rust_analyzer", "ts_ls", "pyright", "taplo", "yamlls", "marksman"  }
+local servers = { "html", "cssls", "java_language_server", "ts_ls", "pyright", "taplo", "yamlls", "marksman"}
 local nvlsp = require "nvchad.configs.lspconfig"
 
 --[[
@@ -59,6 +59,7 @@ lspconfig.texlab.setup {
     }
   }
 }
+
 local function filter_lsp_completion(client, bufnr)
     vim.api.nvim_create_autocmd("TextChangedI", {
         buffer = bufnr,
@@ -118,3 +119,9 @@ require('lspconfig').texlab.setup({
 --   on_init = nvlsp.on_init,
 --   capabilities = nvlsp.capabilities,
 -- }
+
+lspconfig.rustowl.setup {
+    trigger = {
+        hover = false,
+    },
+}
